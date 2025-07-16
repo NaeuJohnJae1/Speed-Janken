@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스피드 가위바위보 오르기</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <h1>스피드 가위바위보 오르기</h1>
+
+        <div id="start-screen">
+            <h2>닉네임을 입력하세요</h2>
+            <input type="text" id="nickname-input" placeholder="10자 이내" maxlength="10">
+            <button id="start-button">게임 시작</button>
+        </div>
+
+        <div id="game-screen" class="hidden">
+            <div id="info-bar">
+                <div id="stage-info">스테이지: <span id="stage">1</span></div>
+                <div id="nickname-display"></div>
+            </div>
+            <div id="timer-bar-container">
+                <div id="timer-bar"></div>
+            </div>
+            <div id="cpu-area">
+                <p>상대방</p>
+                <div id="cpu-hand" class="hand">?</div>
+            </div>
+            <div id="player-area">
+                <p>나</p>
+                <div id="player-buttons">
+                    </div>
+            </div>
+        </div>
+
+        <div id="game-over-screen" class="hidden">
+            <h2>게임 오버</h2>
+            <p>최종 스테이지: <span id="final-stage">0</span></p>
+            <button id="restart-button">다시 시작</button>
+        </div>
+        
+        <div id="ranking-container">
+            <h2>🏆 랭킹 (상위 500)</h2>
+            <p>동점일 경우, 나중에 달성한 사람이 더 높은 순위입니다.</p>
+            <div id="my-rank"></div>
+            <ol id="ranking-list"></ol>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <script>
+        // 1단계에서 복사한 Firebase 설정 코드를 여기에 붙여넣으세요.
+        const firebaseConfig = {
+            apiKey: "AIzaSyAXjJTJEI6aIKPGSWdNoc0RA8G0xt-PpuY",
+            authDomain: "speed-janken.firebaseapp.com",
+            projectId: "speed-janken",
+            storageBucket: "speed-janken.firebasestorage.app",
+            messagingSenderId: "9003956735",
+            appId: "1:9003956735:web:bc2b607de008732fa88fca"
+        };
+
+        // Firebase 초기화
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
