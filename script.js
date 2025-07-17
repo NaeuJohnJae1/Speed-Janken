@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .limit(500)
                 .get();
 
-            rankingList.innerHTML = ''; // 기존 목록 초기화
+            rankingList.innerHTML = '';
             if (topRankSnapshot.empty) {
                 rankingList.innerHTML = '<li>아직 랭킹이 없습니다.</li>';
             } else {
@@ -192,11 +192,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!nickname) return; // 닉네임이 없으면 내 순위 계산 안함
 
         try {
-            // 내 랭킹 정보 가져오기
             const userQuerySnapshot = await rankingCollection.where('name', '==', nickname).get();
             if (userQuerySnapshot.empty) {
-                // 사용자의 랭킹 기록이 아직 없음
-                return;
+                return; // 사용자의 랭킹 기록이 아직 없음
             }
             
             const myData = userQuerySnapshot.docs[0].data();
@@ -204,12 +202,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const myTimestamp = myData.timestamp;
 
             // 나보다 점수가 높은 사람 수 세기
-            const higherScoreSnapshot = await rankingCollection.where('score', '>', myScore).count().get();
+            const higherScoreSnapshot = await rankingCollection.where('score', '>', myScore).get();
             
-            // 나랑 점수는 같지만, 나보다 더 나중에 기록한(timestamp가 더 큰) 사람 수 세기
-            const sameScoreHigherTimeSnapshot = await rankingCollection.where('score', '==', myScore).where('timestamp', '>', myTimestamp).count().get();
+            // 나랑 점수는 같지만, 나보다 더 나중에 기록한 사람 수 세기
+            const sameScoreSnapshot = await rankingCollection.where('score', '==', myScore).where('timestamp', '>', myTimestamp).get();
 
-            const myRank = higherScoreSnapshot.data().count + sameScoreHigherTimeSnapshot.data().count + 1;
+            // .size를 사용하여 문서 개수를 셉니다. (v8 SDK 호환 방식)
+            const myRank = higherScoreSnapshot.size + sameScoreSnapshot.size + 1;
 
             myRankDisplay.textContent = `내 순위: ${myRank}위 (${myScore} 스테이지)`;
             myRankDisplay.classList.remove('hidden');
