@@ -174,17 +174,21 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 topRankSnapshot.forEach((doc, index) => {
                     const rankData = doc.data();
-                    const li = document.createElement('li');
-                    li.innerHTML = `
-                        <span class="rank-name">${index + 1}. ${rankData.name}</span>
-                        <span class="rank-stage">${rankData.score} 스테이지</span>
-                    `;
-                    rankingList.appendChild(li);
+                    const rank = index + 1;
+                    // NaN 방어 코드 추가
+                    if (rankData && !isNaN(rank)) {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <span class="rank-name">${rank}. ${rankData.name}</span>
+                            <span class="rank-stage">${rankData.score} 스테이지</span>
+                        `;
+                        rankingList.appendChild(li);
+                    }
                 });
             }
         } catch (error) {
             console.error("상위 랭킹 불러오기 오류: ", error);
-            rankingList.innerHTML = '<li>랭킹을 불러오는 데 실패했습니다.</li>';
+            rankingList.innerHTML = '<li>랭킹을 불러오는 데 실패했습니다. (색인 필요)</li>';
         }
 
         // 2. '내 순위'를 별도로 계산하여 표시
@@ -199,14 +203,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const myData = userQuerySnapshot.docs[0].data();
             const myScore = myData.score;
-            const myTimestamp = myData.timestamp; // 서버에서 오는 값이므로 처음엔 null일 수 있음
+            const myTimestamp = myData.timestamp; 
 
-            // 나보다 점수가 높은 사람 수 세기
             const higherScoreSnapshot = await rankingCollection.where('score', '>', myScore).get();
             const higherScoreCount = higherScoreSnapshot.size;
             
             let sameScoreCount = 0;
-            // *** 중요: myTimestamp가 존재할 때만 시간 비교 쿼리를 실행 ***
             if (myTimestamp) {
                 const sameScoreSnapshot = await rankingCollection.where('score', '==', myScore).where('timestamp', '>', myTimestamp).get();
                 sameScoreCount = sameScoreSnapshot.size;
@@ -218,8 +220,9 @@ document.addEventListener('DOMContentLoaded', () => {
             myRankDisplay.classList.remove('hidden');
 
         } catch (error) {
+            // 이 오류는 대부분 색인 누락 때문입니다.
             console.error("내 순위 불러오기 오류: ", error);
-            myRankDisplay.textContent = `내 순위를 불러올 수 없습니다.`;
+            myRankDisplay.textContent = `내 순위를 불러올 수 없습니다. (DB 색인 확인 필요)`;
             myRankDisplay.classList.remove('hidden');
         }
     }
