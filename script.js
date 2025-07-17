@@ -57,7 +57,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function restartGame() {
         gameOverScreen.classList.add('hidden');
         startScreen.classList.remove('hidden');
-        myRankDisplay.classList.add('hidden');
     }
 
     function nextStage() {
@@ -132,10 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!name || score <= 0) return;
 
         try {
-            // 기존 기록 확인
-            const querySnapshot = await rankingCollection.where('name', '==', name).get();
+            const userQuerySnapshot = await rankingCollection.where('name', '==', name).get();
             
-            if (querySnapshot.empty) {
+            if (userQuerySnapshot.empty) {
                 // 새 기록 추가
                 await rankingCollection.add({
                     name: name,
@@ -143,10 +141,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
             } else {
-                // 기존 기록 업데이트 (더 높은 점수일 경우)
-                const doc = querySnapshot.docs[0];
-                if (doc.data().score < score) {
-                    await rankingCollection.doc(doc.id).update({
+                // 기존 기록 업데이트 (더 높은 점수일 경우에만)
+                const userDoc = userQuerySnapshot.docs[0];
+                if (userDoc.data().score < score) {
+                    await rankingCollection.doc(userDoc.id).update({
                         score: score,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -155,55 +153,74 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("랭킹 저장 오류: ", error);
         } finally {
-            loadRanking(); // 랭킹 갱신
+            // 랭킹 표시 갱신
+            loadRanking();
         }
     }
 
     async function loadRanking() {
+        // 1. 상위 500위 랭킹 목록 표시
         rankingList.innerHTML = '<li>불러오는 중...</li>';
-        myRankDisplay.classList.add('hidden');
-
         try {
-            const snapshot = await rankingCollection
-                .orderBy('score', 'desc') // 1. 점수 내림차순
-                .orderBy('timestamp', 'desc') // 2. 시간 내림차순 (최신순)
+            const topRankSnapshot = await rankingCollection
+                .orderBy('score', 'desc')
+                .orderBy('timestamp', 'desc')
                 .limit(500)
                 .get();
 
             rankingList.innerHTML = ''; // 기존 목록 초기화
-            if (snapshot.empty) {
+            if (topRankSnapshot.empty) {
                 rankingList.innerHTML = '<li>아직 랭킹이 없습니다.</li>';
-                return;
-            }
-
-            const allRanks = [];
-            snapshot.forEach((doc, index) => {
-                const rankData = { ...doc.data(), rank: index + 1 };
-                allRanks.push(rankData);
-
-                if (index < 500) {
+            } else {
+                topRankSnapshot.forEach((doc, index) => {
+                    const rankData = doc.data();
                     const li = document.createElement('li');
                     li.innerHTML = `
-                        <span class="rank-name">${index + 1}. ${doc.data().name}</span>
-                        <span class="rank-stage">${doc.data().score} 스테이지</span>
+                        <span class="rank-name">${index + 1}. ${rankData.name}</span>
+                        <span class="rank-stage">${rankData.score} 스테이지</span>
                     `;
                     rankingList.appendChild(li);
-                }
-            });
-
-            // 내 순위 찾기
-            const myRankData = allRanks.find(r => r.name === nickname);
-            if(myRankData) {
-                myRankDisplay.textContent = `내 순위: ${myRankData.rank}위 (${myRankData.score} 스테이지)`;
-                myRankDisplay.classList.remove('hidden');
+                });
             }
+        } catch (error) {
+            console.error("상위 랭킹 불러오기 오류: ", error);
+            rankingList.innerHTML = '<li>랭킹을 불러오는 데 실패했습니다.</li>';
+        }
+
+        // 2. '내 순위'를 별도로 계산하여 표시
+        myRankDisplay.classList.add('hidden');
+        if (!nickname) return; // 닉네임이 없으면 내 순위 계산 안함
+
+        try {
+            // 내 랭킹 정보 가져오기
+            const userQuerySnapshot = await rankingCollection.where('name', '==', nickname).get();
+            if (userQuerySnapshot.empty) {
+                // 사용자의 랭킹 기록이 아직 없음
+                return;
+            }
+            
+            const myData = userQuerySnapshot.docs[0].data();
+            const myScore = myData.score;
+            const myTimestamp = myData.timestamp;
+
+            // 나보다 점수가 높은 사람 수 세기
+            const higherScoreSnapshot = await rankingCollection.where('score', '>', myScore).count().get();
+            
+            // 나랑 점수는 같지만, 나보다 더 나중에 기록한(timestamp가 더 큰) 사람 수 세기
+            const sameScoreHigherTimeSnapshot = await rankingCollection.where('score', '==', myScore).where('timestamp', '>', myTimestamp).count().get();
+
+            const myRank = higherScoreSnapshot.data().count + sameScoreHigherTimeSnapshot.data().count + 1;
+
+            myRankDisplay.textContent = `내 순위: ${myRank}위 (${myScore} 스테이지)`;
+            myRankDisplay.classList.remove('hidden');
 
         } catch (error) {
-            console.error("랭킹 불러오기 오류: ", error);
-            rankingList.innerHTML = '<li>랭킹을 불러오는 데 실패했습니다.</li>';
+            console.error("내 순위 불러오기 오류: ", error);
+            myRankDisplay.textContent = `내 순위를 불러올 수 없습니다.`;
+            myRankDisplay.classList.remove('hidden');
         }
     }
 
-    // 초기 랭킹 로드
+    // 페이지 로드 시 초기 랭킹 표시
     loadRanking();
 });
