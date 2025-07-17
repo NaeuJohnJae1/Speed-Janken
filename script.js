@@ -134,37 +134,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const userQuerySnapshot = await rankingCollection.where('name', '==', name).get();
             
             if (userQuerySnapshot.empty) {
-                // 새 기록 추가
-                await rankingCollection.add({
-                    name: name,
-                    score: score,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
+                await rankingCollection.add({ name: name, score: score, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
             } else {
-                // 기존 기록 업데이트 (더 높은 점수일 경우에만)
                 const userDoc = userQuerySnapshot.docs[0];
                 if (userDoc.data().score < score) {
-                    await rankingCollection.doc(userDoc.id).update({
-                        score: score,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    await rankingCollection.doc(userDoc.id).update({ score: score, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
                 }
             }
         } catch (error) {
             console.error("랭킹 저장 오류: ", error);
         } finally {
-            // 랭킹 표시 갱신
             loadRanking();
         }
     }
 
     async function loadRanking() {
-        // 1. 상위 500위 랭킹 목록 표시
-        rankingList.innerHTML = '<li>불러오는 중...</li>';
+        // ### 테스트를 위해 정렬 기준을 하나로 줄였습니다 ###
+        rankingList.innerHTML = '<li>테스트 랭킹 불러오는 중...</li>';
         try {
             const topRankSnapshot = await rankingCollection
-                .orderBy('score', 'desc')
-                .orderBy('timestamp', 'desc')
+                .orderBy('score', 'desc') // timestamp 정렬을 임시로 제거
                 .limit(500)
                 .get();
 
@@ -175,7 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 topRankSnapshot.forEach((doc, index) => {
                     const rankData = doc.data();
                     const rank = index + 1;
-                    // NaN 방어 코드 추가
                     if (rankData && !isNaN(rank)) {
                         const li = document.createElement('li');
                         li.innerHTML = `
@@ -187,23 +175,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         } catch (error) {
-            console.error("상위 랭킹 불러오기 오류: ", error);
-            rankingList.innerHTML = '<li>랭킹을 불러오는 데 실패했습니다. (색인 필요)</li>';
+            console.error("테스트 랭킹 불러오기 오류: ", error);
+            rankingList.innerHTML = '<li>테스트 랭킹을 불러오는 데 실패했습니다.</li>';
         }
 
-        // 2. '내 순위'를 별도로 계산하여 표시
+        // '내 순위' 부분은 그대로 둡니다.
         myRankDisplay.classList.add('hidden');
-        if (!nickname) return; // 닉네임이 없으면 내 순위 계산 안함
-
+        if (!nickname) return;
         try {
             const userQuerySnapshot = await rankingCollection.where('name', '==', nickname).get();
-            if (userQuerySnapshot.empty) {
-                return; // 사용자의 랭킹 기록이 아직 없음
-            }
+            if (userQuerySnapshot.empty) { return; }
             
             const myData = userQuerySnapshot.docs[0].data();
             const myScore = myData.score;
-            const myTimestamp = myData.timestamp; 
+            const myTimestamp = myData.timestamp;
 
             const higherScoreSnapshot = await rankingCollection.where('score', '>', myScore).get();
             const higherScoreCount = higherScoreSnapshot.size;
@@ -215,18 +200,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const myRank = higherScoreCount + sameScoreCount + 1;
-
             myRankDisplay.textContent = `내 순위: ${myRank}위 (${myScore} 스테이지)`;
             myRankDisplay.classList.remove('hidden');
-
         } catch (error) {
-            // 이 오류는 대부분 색인 누락 때문입니다.
             console.error("내 순위 불러오기 오류: ", error);
-            myRankDisplay.textContent = `내 순위를 불러올 수 없습니다. (DB 색인 확인 필요)`;
+            myRankDisplay.textContent = `내 순위를 불러올 수 없습니다.`;
             myRankDisplay.classList.remove('hidden');
         }
     }
 
-    // 페이지 로드 시 초기 랭킹 표시
     loadRanking();
 });
