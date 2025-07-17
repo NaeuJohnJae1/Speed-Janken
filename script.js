@@ -199,16 +199,20 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const myData = userQuerySnapshot.docs[0].data();
             const myScore = myData.score;
-            const myTimestamp = myData.timestamp;
+            const myTimestamp = myData.timestamp; // 서버에서 오는 값이므로 처음엔 null일 수 있음
 
             // 나보다 점수가 높은 사람 수 세기
             const higherScoreSnapshot = await rankingCollection.where('score', '>', myScore).get();
+            const higherScoreCount = higherScoreSnapshot.size;
             
-            // 나랑 점수는 같지만, 나보다 더 나중에 기록한 사람 수 세기
-            const sameScoreSnapshot = await rankingCollection.where('score', '==', myScore).where('timestamp', '>', myTimestamp).get();
+            let sameScoreCount = 0;
+            // *** 중요: myTimestamp가 존재할 때만 시간 비교 쿼리를 실행 ***
+            if (myTimestamp) {
+                const sameScoreSnapshot = await rankingCollection.where('score', '==', myScore).where('timestamp', '>', myTimestamp).get();
+                sameScoreCount = sameScoreSnapshot.size;
+            }
 
-            // .size를 사용하여 문서 개수를 셉니다. (v8 SDK 호환 방식)
-            const myRank = higherScoreSnapshot.size + sameScoreSnapshot.size + 1;
+            const myRank = higherScoreCount + sameScoreCount + 1;
 
             myRankDisplay.textContent = `내 순위: ${myRank}위 (${myScore} 스테이지)`;
             myRankDisplay.classList.remove('hidden');
