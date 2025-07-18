@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 게임 로직 ---
+    // --- 게임 로직 (생략된 부분은 이전과 동일) ---
     function startGame() {
         nickname = nicknameInput.value.trim();
         if (!nickname) {
@@ -61,12 +61,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function nextStage() {
         stageDisplay.textContent = stage;
-        playerButtonsContainer.innerHTML = ''; // 버튼 초기화
+        playerButtonsContainer.innerHTML = ''; 
         
         const cpuHand = hands[Math.floor(Math.random() * 3)];
         cpuHandDisplay.textContent = cpuHand;
 
-        // 버튼 랜덤 배치
         const playerHandOptions = shuffle([...hands]);
         playerHandOptions.forEach(hand => {
             const button = document.createElement('button');
@@ -80,32 +79,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function selectHand(playerHand, cpuHand) {
-        clearInterval(timerInterval); // 타이머 정지
+        clearInterval(timerInterval);
         
         if (winConditions[cpuHand] === playerHand) {
-            // 승리
             stage++;
-            setTimeout(nextStage, 300); // 다음 스테이지로
+            setTimeout(nextStage, 300);
         } else {
-            // 패배
             gameOver();
         }
     }
 
     function startTimer() {
-        const initialTime = Math.max(5000 - (stage - 1) * 150, 700); // 스테이지가 오를수록 시간 감소, 최소 0.7초
+        const initialTime = Math.max(5000 - (stage - 1) * 150, 700);
         timeLeft = initialTime;
-        timerBar.style.transition = 'none'; // 초기화 시 트랜지션 제거
+        timerBar.style.transition = 'none';
         timerBar.style.width = '100%';
         
-        // 강제 리플로우로 트랜지션 재적용
         void timerBar.offsetWidth; 
         
         timerBar.style.transition = `width ${initialTime / 1000}s linear`;
         timerBar.style.width = '0%';
 
         clearInterval(timerInterval);
-        timerInterval = setTimeout(gameOver, initialTime); // 시간이 다 되면 게임 오버
+        timerInterval = setTimeout(gameOver, initialTime);
     }
 
     function gameOver() {
@@ -117,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
         saveRanking(nickname, stage);
     }
 
-    // --- 유틸리티 함수 ---
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -126,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return array;
     }
 
-    // --- Firebase 랭킹 관련 ---
     async function saveRanking(name, score) {
         if (!name || score <= 0) return;
 
@@ -134,10 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const userQuerySnapshot = await rankingCollection.where('name', '==', name).get();
             
             if (userQuerySnapshot.empty) {
-                // 새 기록 추가
                 await rankingCollection.add({ name: name, score: score, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
             } else {
-                // 기존 기록 업데이트 (더 높은 점수일 경우에만)
                 const userDoc = userQuerySnapshot.docs[0];
                 if (userDoc.data().score < score) {
                     await rankingCollection.doc(userDoc.id).update({ score: score, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
@@ -146,73 +138,41 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("랭킹 저장 오류: ", error);
         } finally {
-            // 랭킹 표시 갱신
             loadRanking();
         }
     }
 
+    // ### 가장 단순화된 랭킹 로드 함수 ###
     async function loadRanking() {
-        // 1. 상위 500위 랭킹 목록 표시
-        rankingList.innerHTML = '<li>불러오는 중...</li>';
-        try {
-            const topRankSnapshot = await rankingCollection
-                .orderBy('score', 'desc')
-                .orderBy('timestamp', 'desc')
-                .limit(500)
-                .get();
-
-            rankingList.innerHTML = '';
-            if (topRankSnapshot.empty) {
-                rankingList.innerHTML = '<li>아직 랭킹이 없습니다.</li>';
-            } else {
-                topRankSnapshot.forEach((doc, index) => {
-                    const rankData = doc.data();
-                    const rank = index + 1;
-                    if (rankData && !isNaN(rank)) {
-                        const li = document.createElement('li');
-                        li.innerHTML = `
-                            <span class="rank-name">${rank}. ${rankData.name}</span>
-                            <span class="rank-stage">${rankData.score} 스테이지</span>
-                        `;
-                        rankingList.appendChild(li);
-                    }
-                });
-            }
-        } catch (error) {
-            console.error("상위 랭킹 불러오기 오류: ", error);
-            rankingList.innerHTML = '<li>랭킹을 불러오는 데 실패했습니다. (DB 색인 확인 필요)</li>';
-        }
-
-        // 2. '내 순위'를 별도로 계산하여 표시
+        rankingList.innerHTML = '<li>데이터를 읽는 중...</li>';
+        // '내 순위'는 이 테스트에서 숨깁니다.
         myRankDisplay.classList.add('hidden');
-        if (!nickname) return;
-        try {
-            const userQuerySnapshot = await rankingCollection.where('name', '==', nickname).get();
-            if (userQuerySnapshot.empty) { return; }
-            
-            const myData = userQuerySnapshot.docs[0].data();
-            const myScore = myData.score;
-            const myTimestamp = myData.timestamp;
 
-            const higherScoreSnapshot = await rankingCollection.where('score', '>', myScore).get();
-            const higherScoreCount = higherScoreSnapshot.size;
-            
-            let sameScoreCount = 0;
-            if (myTimestamp) {
-                const sameScoreSnapshot = await rankingCollection.where('score', '==', myScore).where('timestamp', '>', myTimestamp).get();
-                sameScoreCount = sameScoreSnapshot.size;
+        try {
+            // 정렬 없이 그냥 모든 데이터를 가져옵니다.
+            const snapshot = await rankingCollection.get();
+
+            if (snapshot.empty) {
+                rankingList.innerHTML = '<li>데이터가 없습니다. 게임을 플레이해서 랭킹을 저장해보세요.</li>';
+                return;
             }
 
-            const myRank = higherScoreCount + sameScoreCount + 1;
-            myRankDisplay.textContent = `내 순위: ${myRank}위 (${myScore} 스테이지)`;
-            myRankDisplay.classList.remove('hidden');
+            rankingList.innerHTML = ''; // 목록 비우기
+            
+            snapshot.forEach((doc, index) => {
+                const data = doc.data();
+                
+                const li = document.createElement('li');
+                // 순위 없이 이름과 점수만 표시
+                li.textContent = `이름: ${data.name}, 점수: ${data.score}`;
+                rankingList.appendChild(li);
+            });
+
         } catch (error) {
-            console.error("내 순위 불러오기 오류: ", error);
-            myRankDisplay.textContent = `내 순위를 불러올 수 없습니다. (DB 색인 확인 필요)`;
-            myRankDisplay.classList.remove('hidden');
+            console.error("### 최종 테스트 오류 ###:", error);
+            rankingList.innerHTML = '<li>최종 테스트 중 오류가 발생했습니다.</li>';
         }
     }
 
-    // 페이지 로드 시 초기 랭킹 표시
     loadRanking();
 });
