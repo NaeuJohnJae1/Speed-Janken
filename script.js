@@ -134,8 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const userQuerySnapshot = await rankingCollection.where('name', '==', name).get();
             
             if (userQuerySnapshot.empty) {
+                // 새 기록 추가
                 await rankingCollection.add({ name: name, score: score, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
             } else {
+                // 기존 기록 업데이트 (더 높은 점수일 경우에만)
                 const userDoc = userQuerySnapshot.docs[0];
                 if (userDoc.data().score < score) {
                     await rankingCollection.doc(userDoc.id).update({ score: score, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
@@ -144,16 +146,18 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("랭킹 저장 오류: ", error);
         } finally {
+            // 랭킹 표시 갱신
             loadRanking();
         }
     }
 
     async function loadRanking() {
-        // ### 테스트를 위해 정렬 기준을 하나로 줄였습니다 ###
-        rankingList.innerHTML = '<li>테스트 랭킹 불러오는 중...</li>';
+        // 1. 상위 500위 랭킹 목록 표시
+        rankingList.innerHTML = '<li>불러오는 중...</li>';
         try {
             const topRankSnapshot = await rankingCollection
-                .orderBy('score', 'desc') // timestamp 정렬을 임시로 제거
+                .orderBy('score', 'desc')
+                .orderBy('timestamp', 'desc')
                 .limit(500)
                 .get();
 
@@ -175,11 +179,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         } catch (error) {
-            console.error("테스트 랭킹 불러오기 오류: ", error);
-            rankingList.innerHTML = '<li>테스트 랭킹을 불러오는 데 실패했습니다.</li>';
+            console.error("상위 랭킹 불러오기 오류: ", error);
+            rankingList.innerHTML = '<li>랭킹을 불러오는 데 실패했습니다. (DB 색인 확인 필요)</li>';
         }
 
-        // '내 순위' 부분은 그대로 둡니다.
+        // 2. '내 순위'를 별도로 계산하여 표시
         myRankDisplay.classList.add('hidden');
         if (!nickname) return;
         try {
@@ -204,10 +208,11 @@ document.addEventListener('DOMContentLoaded', () => {
             myRankDisplay.classList.remove('hidden');
         } catch (error) {
             console.error("내 순위 불러오기 오류: ", error);
-            myRankDisplay.textContent = `내 순위를 불러올 수 없습니다.`;
+            myRankDisplay.textContent = `내 순위를 불러올 수 없습니다. (DB 색인 확인 필요)`;
             myRankDisplay.classList.remove('hidden');
         }
     }
 
+    // 페이지 로드 시 초기 랭킹 표시
     loadRanking();
 });
