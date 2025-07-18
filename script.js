@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- 게임 로직 (생략된 부분은 이전과 동일) ---
+    // --- 게임 로직 ---
     function startGame() {
         nickname = nicknameInput.value.trim();
         if (!nickname) {
@@ -142,37 +142,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ### 가장 단순화된 랭킹 로드 함수 ###
     async function loadRanking() {
-        rankingList.innerHTML = '<li>데이터를 읽는 중...</li>';
-        // '내 순위'는 이 테스트에서 숨깁니다.
-        myRankDisplay.classList.add('hidden');
-
+        // 1. 상위 500위 랭킹 목록 표시
+        rankingList.innerHTML = '<li>불러오는 중...</li>';
         try {
-            // 정렬 없이 그냥 모든 데이터를 가져옵니다.
-            const snapshot = await rankingCollection.get();
+            const topRankSnapshot = await rankingCollection
+                .orderBy('score', 'desc')
+                .orderBy('timestamp', 'desc')
+                .limit(500)
+                .get();
 
-            if (snapshot.empty) {
-                rankingList.innerHTML = '<li>데이터가 없습니다. 게임을 플레이해서 랭킹을 저장해보세요.</li>';
-                return;
+            rankingList.innerHTML = '';
+            if (topRankSnapshot.empty) {
+                rankingList.innerHTML = '<li>아직 랭킹이 없습니다.</li>';
+            } else {
+                topRankSnapshot.forEach((doc, index) => {
+                    const rankData = doc.data();
+                    const rank = index + 1;
+                    if (rankData && !isNaN(rank)) {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <span class="rank-name">${rank}. ${rankData.name}</span>
+                            <span class="rank-stage">${rankData.score} 스테이지</span>
+                        `;
+                        rankingList.appendChild(li);
+                    }
+                });
+            }
+        } catch (error) {
+            console.error("상위 랭킹 불러오기 오류: ", error);
+            rankingList.innerHTML = '<li>랭킹을 불러오는 데 실패했습니다. (DB 색인 확인 필요)</li>';
+        }
+
+        // 2. '내 순위'를 별도로 계산하여 표시
+        myRankDisplay.classList.add('hidden');
+        if (!nickname) return;
+        try {
+            const userQuerySnapshot = await rankingCollection.where('name', '==', nickname).get();
+            if (userQuerySnapshot.empty) { return; }
+            
+            const myData = userQuerySnapshot.docs[0].data();
+            const myScore = myData.score;
+            const myTimestamp = myData.timestamp;
+
+            const higherScoreSnapshot = await rankingCollection.where('score', '>', myScore).get();
+            const higherScoreCount = higherScoreSnapshot.size;
+            
+            let sameScoreCount = 0;
+            if (myTimestamp) {
+                const sameScoreSnapshot = await rankingCollection.where('score', '==', myScore).where('timestamp', '>', myTimestamp).get();
+                sameScoreCount = sameScoreSnapshot.size;
             }
 
-            rankingList.innerHTML = ''; // 목록 비우기
-            
-            snapshot.forEach((doc, index) => {
-                const data = doc.data();
-                
-                const li = document.createElement('li');
-                // 순위 없이 이름과 점수만 표시
-                li.textContent = `이름: ${data.name}, 점수: ${data.score}`;
-                rankingList.appendChild(li);
-            });
-
+            const myRank = higherScoreCount + sameScoreCount + 1;
+            myRankDisplay.textContent = `내 순위: ${myRank}위 (${myScore} 스테이지)`;
+            myRankDisplay.classList.remove('hidden');
         } catch (error) {
-            console.error("### 최종 테스트 오류 ###:", error);
-            rankingList.innerHTML = '<li>최종 테스트 중 오류가 발생했습니다.</li>';
+            console.error("내 순위 불러오기 오류: ", error);
+            myRankDisplay.textContent = `내 순위를 불러올 수 없습니다. (DB 색인 확인 필요)`;
+            myRankDisplay.classList.remove('hidden');
         }
     }
 
+    // 페이지 로드 시 초기 랭킹 표시
     loadRanking();
 });
