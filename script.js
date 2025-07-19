@@ -1,3 +1,14 @@
+// 1. Firebase 설정을 맨 위로 옮깁니다.
+// 여기에 자신의 Firebase 설정 코드를 붙여넣으세요!
+const firebaseConfig = {
+  apiKey: "AIzaSyAXjJTJEI6aIKPGSWdNoc0RA8G0xt-PpuY",
+  authDomain: "speed-janken.firebaseapp.com",
+  projectId: "speed-janken",
+  storageBucket: "speed-janken.firebasestorage.app",
+  messagingSenderId: "9003956735",
+  appId: "1:9003956735:web:bc2b607de008732fa88fca"
+};
+
 // 2. Firebase 초기화
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
@@ -174,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stage++;
             setTimeout(nextStage, 300);
         } else {
-            playSound(sounds.fail, 0.2); // 실패 효과음 볼륨 조절
+            playSound(sounds.fail, 0.4); 
             gameOver();
         }
     }
@@ -188,7 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allElements.timerBar.style.width = '0%';
         clearInterval(timerInterval);
         timerInterval = setTimeout(() => {
-            playSound(sounds.fail, 0.4); // 실패 효과음 볼륨 조절
+            playSound(sounds.fail, 0.4);
             gameOver();
         }, initialTime);
     }
