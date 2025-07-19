@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stage++;
             setTimeout(nextStage, 300);
         } else {
-            playSound(sounds.fail, 0.4); 
+            playSound(sounds.fail, 0.2); 
             gameOver();
         }
     }
