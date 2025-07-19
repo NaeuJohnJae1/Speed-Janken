@@ -1,14 +1,3 @@
-// 1. Firebase 설정
-// 여기에 자신의 Firebase 설정 코드를 붙여넣으세요!
-const firebaseConfig = {
-  apiKey: "AIzaSyAXjJTJEI6aIKPGSWdNoc0RA8G0xt-PpuY",
-  authDomain: "speed-janken.firebaseapp.com",
-  projectId: "speed-janken",
-  storageBucket: "speed-janken.firebasestorage.app",
-  messagingSenderId: "9003956735",
-  appId: "1:9003956735:web:bc2b607de008732fa88fca"
-};
-
 // 2. Firebase 초기화
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
@@ -16,7 +5,7 @@ const db = firebase.firestore();
 
 // 3. 전체 게임 코드
 document.addEventListener('DOMContentLoaded', () => {
-    // --- 번역 데이터 (오타 수정됨) ---
+    // --- 번역 데이터 ---
     const translations = {
         ko: {
             title: "순발력! 가위바위보", nicknameTitle: "닉네임을 입력하세요", nicknamePlaceholder: "10자 이내",
@@ -109,7 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
         loadRanking();
     }
 
-    function playSound(sound) {
+    function playSound(sound, volume = 1.0) {
+        sound.volume = volume;
         sound.currentTime = 0;
         sound.play();
     }
@@ -123,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (e.key === 'ArrowRight') selectedButton = playerHandElements[2];
         
         if (selectedButton) {
-            e.preventDefault(); // 방향키의 기본 동작(스크롤 등)을 막습니다.
+            e.preventDefault(); 
             playSound(sounds.click);
             selectedButton.click();
         }
@@ -184,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stage++;
             setTimeout(nextStage, 300);
         } else {
-            playSound(sounds.fail);
+            playSound(sounds.fail, 0.4); // 실패 효과음 볼륨 조절
             gameOver();
         }
     }
@@ -198,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allElements.timerBar.style.width = '0%';
         clearInterval(timerInterval);
         timerInterval = setTimeout(() => {
-            playSound(sounds.fail);
+            playSound(sounds.fail, 0.4); // 실패 효과음 볼륨 조절
             gameOver();
         }, initialTime);
     }
