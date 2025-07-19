@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 번역 데이터 ---
     const translations = {
         ko: {
-            title: "스피드 가위바위보 오르기", nicknameTitle: "닉네임을 입력하세요", nicknamePlaceholder: "10자 이내",
+            title: "순발력! 가위바위보", nicknameTitle: "닉네임을 입력하세요", nicknamePlaceholder: "10자 이내",
             startButton: "게임 시작", stageLabel: "스테이지", cpuLabel: "상대방", playerLabel: "나",
             gameOverTitle: "게임 오버", finalStageLabel: "최종 스테이지", restartButton: "다시 시작",
             rankingTitle: "🏆 랭킹 (상위 500)", rankingRule: "동점일 경우, 나중에 달성한 사람이 더 높은 순위입니다.",
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
             myRank: "내 순위", myRankFail: "내 순위를 불러올 수 없습니다.", stageUnit: "스테이지", challenger: "도전자"
         },
         en: {
-            title: "Speed RSP Climb", nicknameTitle: "Enter your nickname", nicknamePlaceholder: "Max 10 chars",
+            title: "Reflex! RSP", nicknameTitle: "Enter your nickname", nicknamePlaceholder: "Max 10 chars",
             startButton: "Start Game", stageLabel: "Stage", cpuLabel: "Opponent", playerLabel: "You",
             gameOverTitle: "Game Over", finalStageLabel: "Final Stage", restartButton: "Restart",
             rankingTitle: "🏆 Ranking (Top 500)", rankingRule: "In case of a tie, the later achiever ranks higher.",
@@ -35,15 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
             myRank: "My Rank", myRankFail: "Could not load your rank.", stageUnit: "Stage", challenger: "Challenger"
         },
         ja: {
-            title: "スピードじゃんけん登り", nicknameTitle: "ニックネームを入力してください", nicknamePlaceholder: "最大10文字",
+            title: "瞬発力！じゃんけん", nicknameTitle: "ニックネームを入力してください", nicknamePlaceholder: "最大10文字",
             startButton: "ゲーム開始", stageLabel: "ステージ", cpuLabel: "相手", playerLabel: "自分",
             gameOverTitle: "ゲームオーバー", finalStageLabel: "最終ステージ", restartButton: "リスタート",
             rankingTitle: "🏆 ランキング (上位500)", rankingRule: "同点の場合、後で達成した人が上位になります。",
             loading: "読み込み中...", noRanking: "まだランキングがありません。", loadFail: "ランキングの読み込みに失敗しました。",
-            myRank: "自分の順位", myRankFail: "自分の順位を読み込めませんでした。", stageUnit: "ステージ", challenger: "挑戦者"
+            myRank: "自分の順位", myRankFail: "自分の順위を読み込めませんでした。", stageUnit: "ステージ", challenger: "挑戦者"
         },
         'zh-CN': {
-            title: "速度剪刀石头布攀登", nicknameTitle: "请输入您的昵称", nicknamePlaceholder: "最多10个字符",
+            title: "反应力！剪刀石头布", nicknameTitle: "请输入您的昵称", nicknamePlaceholder: "最多10个字符",
             startButton: "开始游戏", stageLabel: "阶段", cpuLabel: "对手", playerLabel: "你",
             gameOverTitle: "游戏结束", finalStageLabel: "最终阶段", restartButton: "重新开始",
             rankingTitle: "🏆 排行榜 (前500名)", rankingRule: "如果分数相同，后达成者排名更高。",
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
             myRank: "我的排名", myRankFail: "无法加载您的排名。", stageUnit: "阶段", challenger: "挑战者"
         },
         'zh-TW': {
-            title: "速度剪刀石頭布攀登", nicknameTitle: "請輸入您的暱稱", nicknamePlaceholder: "最多10個字元",
+            title: "反應力！剪刀石頭布", nicknameTitle: "請輸入您的暱稱", nicknamePlaceholder: "最多10個字元",
             startButton: "開始遊戲", stageLabel: "階段", cpuLabel: "對手", playerLabel: "您",
             gameOverTitle: "遊戲結束", finalStageLabel: "最終階段", restartButton: "重新開始",
             rankingTitle: "🏆 排行榜 (前500名)", rankingRule: "如果分數相同，後達成者排名更高。",
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const key = el.getAttribute('data-lang-placeholder');
             if(t[key]) el.placeholder = t[key];
         });
-        loadRanking(); // 언어 변경 시 랭킹 다시 로드
+        loadRanking();
     }
 
     function playSound(sound) {
@@ -123,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (e.key === 'ArrowRight') selectedButton = playerHandElements[2];
         
         if (selectedButton) {
+            e.preventDefault(); // 방향키의 기본 동작(스크롤 등)을 막습니다.
             playSound(sounds.click);
             selectedButton.click();
         }
@@ -155,7 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function nextStage() {
         allElements.stageDisplay.textContent = stage;
         allElements.playerButtonsContainer.innerHTML = '';
-        playerHandElements = []; // 키보드 조작을 위해 버튼 요소 저장 배열 초기화
+        playerHandElements = [];
         
         const cpuHand = hands[Math.floor(Math.random() * 3)];
         allElements.cpuHandDisplay.textContent = cpuHand;
@@ -170,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectHand(hand, cpuHand);
             });
             allElements.playerButtonsContainer.appendChild(button);
-            playerHandElements.push(button); // 생성된 버튼을 배열에 추가
+            playerHandElements.push(button);
         });
 
         startTimer();
@@ -201,6 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
             gameOver();
         }, initialTime);
     }
+
+
 
     function gameOver() {
         clearInterval(timerInterval);
@@ -257,6 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 topRankSnapshot.forEach((doc) => {
                     rank++;
                     const rankData = doc.data();
+                    
                     const li = document.createElement('li');
                     li.innerHTML = `
                         <span class="rank-name">${rank}. ${rankData.name}</span>
@@ -299,6 +303,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 초기 언어 설정 및 랭킹 로드
     updateLanguage(currentLang);
 });
