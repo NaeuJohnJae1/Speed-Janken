@@ -28,7 +28,6 @@ h1, h2 {
     display: none !important;
 }
 
-/* --- 스크린 --- */
 #start-screen, #game-over-screen {
     padding: 30px 0;
 }
@@ -58,7 +57,6 @@ button:hover {
     background-color: #1558b8;
 }
 
-/* --- 게임 화면 --- */
 #info-bar {
     display: flex;
     justify-content: space-between;
@@ -98,7 +96,7 @@ button:hover {
     justify-content: center;
     gap: 15px;
     margin-top: 15px;
-    height: 100px; /* 버튼 위치 변경 시 레이아웃 깨짐 방지 */
+    height: 100px;
     align-items: center;
 }
 
@@ -118,8 +116,6 @@ button:hover {
     background-color: #e8f0fe;
 }
 
-
-/* --- 랭킹 --- */
 #ranking-container {
     margin-top: 30px;
     text-align: left;
@@ -163,8 +159,4 @@ button:hover {
     padding: 10px;
     background-color: #fce8e6;
     border-radius: 5px;
-}
-
-#my-rank.hidden {
-    display: none;
 }

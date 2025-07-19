@@ -133,7 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadRanking() {
-        // 1. 전체 랭킹 표시
         rankingList.innerHTML = '<li>불러오는 중...</li>';
         try {
             const topRankSnapshot = await rankingCollection
@@ -146,9 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (topRankSnapshot.empty) {
                 rankingList.innerHTML = '<li>아직 랭킹이 없습니다.</li>';
             } else {
-                let rank = 0; // ### 수정된 부분: 순위 변수 생성 ###
-                topRankSnapshot.forEach((doc) => { // ### 수정된 부분: index 사용 안함 ###
-                    rank++; // ### 수정된 부분: 순위 1씩 증가 ###
+                let rank = 0;
+                topRankSnapshot.forEach((doc) => {
+                    rank++;
                     const rankData = doc.data();
                     
                     const li = document.createElement('li');
@@ -164,7 +163,6 @@ document.addEventListener('DOMContentLoaded', () => {
             rankingList.innerHTML = '<li>랭킹을 불러오는 데 실패했습니다.</li>';
         }
 
-        // 2. 내 순위 표시
         myRankDisplay.classList.add('hidden');
         if (!nickname) return;
         try {
