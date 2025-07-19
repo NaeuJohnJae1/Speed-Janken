@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stage++;
             setTimeout(nextStage, 300);
         } else {
-            playSound(sounds.fail, 0.4); // 실패 효과음 볼륨 조절
+            playSound(sounds.fail, 0.2); // 실패 효과음 볼륨 조절
             gameOver();
         }
     }
