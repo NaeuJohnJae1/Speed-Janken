@@ -1,3 +1,20 @@
+// 1. Firebase 설정을 맨 위로 옮깁니다.
+// 여기에 자신의 Firebase 설정 코드를 붙여넣으세요!
+const firebaseConfig = {
+  apiKey: "AIzaSyAXjJTJEI6aIKPGSWdNoc0RA8G0xt-PpuY",
+  authDomain: "speed-janken.firebaseapp.com",
+  projectId: "speed-janken",
+  storageBucket: "speed-janken.firebasestorage.app",
+  messagingSenderId: "9003956735",
+  appId: "1:9003956735:web:bc2b607de008732fa88fca"
+};
+
+// 2. Firebase 초기화
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+
+// 3. 전체 게임 코드
 document.addEventListener('DOMContentLoaded', () => {
     // 화면 요소
     const startScreen = document.getElementById('start-screen');
@@ -15,41 +32,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const rankingList = document.getElementById('ranking-list');
     const myRankDisplay = document.getElementById('my-rank');
 
-    // 게임 변수
     let nickname = '';
     let stage = 1;
-    let timer;
     let timerInterval;
-    let timeLeft;
-    const hands = ['✌️', '✊', '🖐️']; // 가위, 바위, 보
+    const hands = ['✌️', '✊', '🖐️'];
     const winConditions = { '✌️': '✊', '✊': '🖐️', '🖐️': '✌️' };
-    
-    // Firebase 랭킹 컬렉션
     const rankingCollection = db.collection('rankings');
 
-    // --- 이벤트 리스너 ---
     startButton.addEventListener('click', startGame);
     restartButton.addEventListener('click', restartGame);
-    nicknameInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            startGame();
-        }
-    });
+    nicknameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') startGame(); });
 
-    // --- 게임 로직 ---
     function startGame() {
         nickname = nicknameInput.value.trim();
-        if (!nickname) {
-            alert('닉네임을 입력해주세요!');
-            return;
-        }
-        
+        if (!nickname) { alert('닉네임을 입력해주세요!'); return; }
         stage = 1;
         nicknameDisplay.textContent = `도전자: ${nickname}`;
         startScreen.classList.add('hidden');
         gameOverScreen.classList.add('hidden');
         gameScreen.classList.remove('hidden');
-        
         loadRanking();
         nextStage();
     }
@@ -61,11 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function nextStage() {
         stageDisplay.textContent = stage;
-        playerButtonsContainer.innerHTML = ''; 
-        
+        playerButtonsContainer.innerHTML = '';
         const cpuHand = hands[Math.floor(Math.random() * 3)];
         cpuHandDisplay.textContent = cpuHand;
-
         const playerHandOptions = shuffle([...hands]);
         playerHandOptions.forEach(hand => {
             const button = document.createElement('button');
@@ -74,13 +73,11 @@ document.addEventListener('DOMContentLoaded', () => {
             button.addEventListener('click', () => selectHand(hand, cpuHand));
             playerButtonsContainer.appendChild(button);
         });
-
         startTimer();
     }
 
     function selectHand(playerHand, cpuHand) {
         clearInterval(timerInterval);
-        
         if (winConditions[cpuHand] === playerHand) {
             stage++;
             setTimeout(nextStage, 300);
@@ -91,15 +88,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startTimer() {
         const initialTime = Math.max(5000 - (stage - 1) * 150, 700);
-        timeLeft = initialTime;
         timerBar.style.transition = 'none';
         timerBar.style.width = '100%';
-        
-        void timerBar.offsetWidth; 
-        
+        void timerBar.offsetWidth;
         timerBar.style.transition = `width ${initialTime / 1000}s linear`;
         timerBar.style.width = '0%';
-
         clearInterval(timerInterval);
         timerInterval = setTimeout(gameOver, initialTime);
     }
@@ -109,7 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
         gameScreen.classList.add('hidden');
         gameOverScreen.classList.remove('hidden');
         finalStageDisplay.textContent = stage;
-        
         saveRanking(nickname, stage);
     }
 
@@ -123,10 +115,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function saveRanking(name, score) {
         if (!name || score <= 0) return;
-
         try {
             const userQuerySnapshot = await rankingCollection.where('name', '==', name).get();
-            
             if (userQuerySnapshot.empty) {
                 await rankingCollection.add({ name: name, score: score, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
             } else {
@@ -143,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadRanking() {
-        // 1. 상위 500위 랭킹 목록 표시
+        // 1. 전체 랭킹 표시
         rankingList.innerHTML = '<li>불러오는 중...</li>';
         try {
             const topRankSnapshot = await rankingCollection
@@ -156,25 +146,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if (topRankSnapshot.empty) {
                 rankingList.innerHTML = '<li>아직 랭킹이 없습니다.</li>';
             } else {
-                topRankSnapshot.forEach((doc, index) => {
+                let rank = 0; // ### 수정된 부분: 순위 변수 생성 ###
+                topRankSnapshot.forEach((doc) => { // ### 수정된 부분: index 사용 안함 ###
+                    rank++; // ### 수정된 부분: 순위 1씩 증가 ###
                     const rankData = doc.data();
-                    const rank = index + 1;
-                    if (rankData && !isNaN(rank)) {
-                        const li = document.createElement('li');
-                        li.innerHTML = `
-                            <span class="rank-name">${rank}. ${rankData.name}</span>
-                            <span class="rank-stage">${rankData.score} 스테이지</span>
-                        `;
-                        rankingList.appendChild(li);
-                    }
+                    
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span class="rank-name">${rank}. ${rankData.name}</span>
+                        <span class="rank-stage">${rankData.score} 스테이지</span>
+                    `;
+                    rankingList.appendChild(li);
                 });
             }
         } catch (error) {
-            console.error("상위 랭킹 불러오기 오류: ", error);
-            rankingList.innerHTML = '<li>랭킹을 불러오는 데 실패했습니다. (DB 색인 확인 필요)</li>';
+            console.error("전체 랭킹 로드 실패: ", error);
+            rankingList.innerHTML = '<li>랭킹을 불러오는 데 실패했습니다.</li>';
         }
 
-        // 2. '내 순위'를 별도로 계산하여 표시
+        // 2. 내 순위 표시
         myRankDisplay.classList.add('hidden');
         if (!nickname) return;
         try {
@@ -199,11 +189,10 @@ document.addEventListener('DOMContentLoaded', () => {
             myRankDisplay.classList.remove('hidden');
         } catch (error) {
             console.error("내 순위 불러오기 오류: ", error);
-            myRankDisplay.textContent = `내 순위를 불러올 수 없습니다. (DB 색인 확인 필요)`;
+            myRankDisplay.textContent = `내 순위를 불러올 수 없습니다.`;
             myRankDisplay.classList.remove('hidden');
         }
     }
 
-    // 페이지 로드 시 초기 랭킹 표시
     loadRanking();
 });
