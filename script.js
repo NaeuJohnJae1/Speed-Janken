@@ -16,7 +16,7 @@ const db = firebase.firestore();
 
 // 3. 전체 게임 코드
 document.addEventListener('DOMContentLoaded', () => {
-    // --- 번역 데이터 ---
+    // --- 번역 데이터 (오타 수정됨) ---
     const translations = {
         ko: {
             title: "순발력! 가위바위보", nicknameTitle: "닉네임을 입력하세요", nicknamePlaceholder: "10자 이내",
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gameOverTitle: "ゲームオーバー", finalStageLabel: "最終ステージ", restartButton: "リスタート",
             rankingTitle: "🏆 ランキング (上位500)", rankingRule: "同点の場合、後で達成した人が上位になります。",
             loading: "読み込み中...", noRanking: "まだランキングがありません。", loadFail: "ランキングの読み込みに失敗しました。",
-            myRank: "自分の順位", myRankFail: "自分の順위を読み込めませんでした。", stageUnit: "ステージ", challenger: "挑戦者"
+            myRank: "自分の順位", myRankFail: "自分の順位を読み込めませんでした。", stageUnit: "ステージ", challenger: "挑戦者"
         },
         'zh-CN': {
             title: "反应力！剪刀石头布", nicknameTitle: "请输入您的昵称", nicknamePlaceholder: "最多10个字符",
